@@ -1,0 +1,3 @@
+[submodule "core-periphery-detection"]
+	path = core-periphery-detection
+	url = https://github.com/skojaku/core-periphery-detection.git
