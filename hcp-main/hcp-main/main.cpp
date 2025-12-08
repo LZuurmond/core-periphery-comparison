@@ -9,6 +9,25 @@
 #include <fstream>
 #include <ctime>
 
+
+// Structure to hold a complete snapshot of a solution
+struct SolutionState {
+    std::vector<uint64_t> groups;
+    std::vector<long long> hcg_edges;
+    std::vector<long long> hcg_pairs;
+    std::vector<long long> group_size;
+    double energy;
+    std::size_t num_groups;
+
+    /* Comparator for min-heap
+    *  we want the smallest energy at the top so we can easily replace it
+    *  if we find a better solution
+    */
+    bool operator>(const SolutionState& other) const {
+        return energy > other.energy;
+    }
+};
+
 int main(int argc, char* argv[]) {
 
     std::string config_file = argv[1];
