@@ -1,5 +1,5 @@
-gml_path: ../clique_cp.gml
-max_itr: 50000000
+gml_path: clique_cp.gml
+max_itr: 1000000000
 max_num_groups: 64
 initial_num_groups: 2
 num_solutions: 20
