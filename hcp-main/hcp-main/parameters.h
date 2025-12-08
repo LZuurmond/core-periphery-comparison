@@ -19,6 +19,7 @@ class parameters {
         long max_itr = 1000000000;
         int max_num_groups = 64;
         int initial_num_groups = 2;
+        int num_solutions = 1;
         std::vector<uint64_t> initial_group_config;
 
         std::string gml_path = "";
@@ -34,6 +35,7 @@ class parameters {
         int get_error_status() const;
         int get_max_num_groups() const;
         int get_initial_num_groups() const;
+        int get_num_solutions() const;
         long get_max_itr() const;
         const std::vector<uint64_t> &get_initial_group_config() const;
         const std::string &get_gml_path() const;

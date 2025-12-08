@@ -58,6 +58,16 @@ void parameters::read_params(std::string file_name) {
                               << std::endl;
                 }
                 std::cout << "initial_num_groups: " << initial_num_groups << std::endl;
+            }else if(key == "num_solutions"){
+                int value;
+                is_line >> value;
+                if (value > 0 && value <= 64) {
+                    num_solutions = value;
+                } else {
+                    std::cout << "Warning: unsupported number of solutions. Using default value instead."
+                              << std::endl;
+                }
+                std::cout << "num_solutions: " << num_solutions << std::endl;
             }else if(key == "gml_path"){
                 std::string value;
                 is_line >> value;
@@ -123,6 +133,10 @@ int parameters::get_max_num_groups() const {
 
 int parameters::get_initial_num_groups() const {
     return initial_num_groups;
+}
+
+int parameters::get_num_solutions() const {
+    return num_solutions;
 }
 
 long  parameters::get_max_itr() const {
