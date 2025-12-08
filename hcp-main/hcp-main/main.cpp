@@ -8,6 +8,9 @@
 #include <chrono>
 #include <fstream>
 #include <ctime>
+#include <queue>
+#include <vector>
+#include <algorithm>
 
 
 // Structure to hold a complete snapshot of a solution
@@ -52,26 +55,63 @@ int main(int argc, char* argv[]) {
     std::vector<double> energies;
     std::vector<std::size_t> num_groups;
 
+    // Priority queue for top-k solutions
+    std::priority_queue<SolutionState, std::vector<SolutionState>, std::greater<SolutionState>> top_k_heap;
+    
+    // get target number of solutions
+    std::size_t k_target = params.get_num_solutions();
 
-
-
+    // get max number of iterations
     long num_itrs = params.get_max_itr();
+
+    // hard-coded burn-in and thinning from the original paper
+    // this is to avoid k identical copies of the same peak
+    long burn_in = 10000000;
+    long thinning = 1500;
+
+
     for(long i = 0; i < num_itrs; ++i){
+        // perform MCMC step
         hcp.get_groups();
-        if((i>10000000) && (i%1500==0)){
-            intermediate_states.push_back(hcp.g);
-            hcg_edges.push_back(hcp.hcg_edges);
-            hcg_pairs.push_back(hcp.hcg_pairs);
-            group_size.push_back(hcp.group_size);
-            energies.push_back(hcp.loglike);
-            num_groups.push_back(hcp.num_groups);
+
+        // only sample after burn-in and at specific intervals to ensure diversity
+        if ((i > burn_in) && (i % thinning == 0)) {
+            
+            // check if we should add this state to our Top K
+            bool should_add = false;
+            if (top_k_heap.size() < k_target) {
+                should_add = true;
+            }
+            else if (hcp.loglike > top_k_heap.top().energy) {
+                should_add = true;
+                top_k_heap.pop(); // remove the worst of the current top K
+            }
+
+            if (should_add) {
+                SolutionState current_state;
+                current_state.groups = hcp.g;
+                current_state.hcg_edges = hcp.hcg_edges;
+                current_state.hcg_pairs = hcp.hcg_pairs;
+                current_state.group_size = hcp.group_size;
+                current_state.energy = hcp.loglike;
+                current_state.num_groups = hcp.num_groups;
+
+                top_k_heap.push(current_state);
+            }
         }
+
         if(i%10000000==0){
             std::cout<<"-----------------------------------------------------"<<std::endl;
             auto curr = std::chrono::system_clock::now();
             auto tm = std::chrono::system_clock::to_time_t(curr);
             std::cout<<"time: "<< std::put_time(std::localtime(&tm), "%c %Z")<<std::endl;
             std::cout<<"iteration: "<<i<<" energy: "<<hcp.loglike<<std::endl;
+
+            // print status of heap
+            if (!top_k_heap.empty()) {
+                std::cout << "Current Top-K Worst Energy: " << top_k_heap.top().energy << std::endl;
+            }
+
             hcp.print_hcg_pairs();
             std::cout<<std::endl;
             hcp.print_hcg_edges();
