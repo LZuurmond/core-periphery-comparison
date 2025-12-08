@@ -121,7 +121,21 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::cout<<"Writing data to file."<<std::endl;
+    std::cout << "Writing Top " << top_k_heap.size() << " solutions to file." << std::endl;
+    
+    //  transfer heap to vector for sorting
+    std::vector<SolutionState> sorted_solutions;
+    while (!top_k_heap.empty()) {
+        sorted_solutions.push_back(top_k_heap.top());
+        top_k_heap.pop();
+    }
+
+    // Sort descending (best energy first)
+    std::sort(sorted_solutions.begin(), sorted_solutions.end(),
+        [](const SolutionState& a, const SolutionState& b) {
+            return a.energy > b.energy;
+    });
+
     std::string filename = params.get_saved_data_name();
     std::string filepath = params.get_save_dir();
     std::ofstream output_groups(filepath+filename+"_configs.txt");
@@ -131,30 +145,35 @@ int main(int argc, char* argv[]) {
     std::ofstream output_pairs(filepath+filename+"_pairs.txt");
     std::ofstream output_ll(filepath+filename+"_ll.txt");
 
-    for (int el = 0; el < intermediate_states.size(); ++el) {
-        // output decimal representation of groups
-        for(int l = 0; l < intermediate_states[el].size(); ++l){
-            output_groups << intermediate_states[el][l]<<" ";
+    for (const auto& sol : sorted_solutions) {
+        // output groups
+        for (size_t l = 0; l < sol.groups.size(); ++l) {
+            output_groups << sol.groups[l] << " ";
         }
         output_groups << std::endl;
 
-        for(int mu = 0; mu < hcg_edges[el].size(); ++mu){
-            output_edges << hcg_edges[el][mu]<<" ";
-            output_pairs << hcg_pairs[el][mu]<<" ";
-            output_group_size << group_size[el][mu]<<" ";
+        // output edges
+        for (size_t mu = 0; mu < sol.hcg_edges.size(); ++mu) {
+            output_edges << sol.hcg_edges[mu] << " ";
+            output_pairs << sol.hcg_pairs[mu] << " ";
+            output_group_size << sol.group_size[mu] << " ";
         }
         output_edges << std::endl;
         output_pairs << std::endl;
         output_group_size << std::endl;
-        output_ll << energies[el]<< std::endl;
-        output_ngroups << num_groups[el] << std::endl;
 
+        // Output energy and num groups
+        output_ll << sol.energy << std::endl;
+        output_ngroups << sol.num_groups << std::endl;
     }
+
     output_groups.close();
     output_edges.close();
     output_pairs.close();
     output_group_size.close();
     output_ll.close();
+
     std::cout<<"Simulation data saved successfully."<<std::endl;
+
     return 0;
 }
