@@ -11,6 +11,7 @@
 #include <queue>
 #include <vector>
 #include <algorithm>
+#include <set>
 
 
 // Structure to hold a complete snapshot of a solution
@@ -57,6 +58,9 @@ int main(int argc, char* argv[]) {
 
     // Priority queue for top-k solutions
     std::priority_queue<SolutionState, std::vector<SolutionState>, std::greater<SolutionState>> top_k_heap;
+
+    // set to store unique solutions
+    std::set<std::vector<uint64_t>> unique_solutions;
     
     // get target number of solutions
     std::size_t k_target = params.get_num_solutions();
@@ -76,15 +80,22 @@ int main(int argc, char* argv[]) {
 
         // only sample after burn-in and at specific intervals to ensure diversity
         if ((i > burn_in) && (i % thinning == 0)) {
-            
+
             // check if we should add this state to our Top K
             bool should_add = false;
-            if (top_k_heap.size() < k_target) {
+            if (unique_solutions.count(hcp.g)) { // first check if it is a duplicate solution
+            }
+            else if (top_k_heap.size() < k_target) {
                 should_add = true;
             }
             else if (hcp.loglike > top_k_heap.top().energy) {
                 should_add = true;
+
+                const std::vector<uint64_t>& worst_groups = top_k_heap.top().groups; // get worst solution
+
                 top_k_heap.pop(); // remove the worst of the current top K
+                unique_solutions.erase(worst_groups); // remove the worst from the unique set
+
             }
 
             if (should_add) {
@@ -97,6 +108,7 @@ int main(int argc, char* argv[]) {
                 current_state.num_groups = hcp.num_groups;
 
                 top_k_heap.push(current_state);
+                unique_solutions.insert(current_state.groups);
             }
         }
 
